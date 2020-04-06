@@ -72,11 +72,21 @@ def ttv_split(data, train, valid, test, random_state = 0, save_name = False):
 
     train_index = train_index[train_index_split] 
     
+    if save_name is not False:
+        assert isinstance(save_name, str), "if saving save name must be a string"
+        
+        np.save(gen_name(save_name + "test", ".npy"), test_index)
+        np.save(gen_name(save_name + "train", ".npy"), train_index)
+        np.save(gen_name(save_name + "valid", ".npy"), valid_index)
+
+
     return train_index, valid_index, test_index
     
-    
-    
-    
-    
-    
+# def split_constituent_data()
+
+
+
+
+
+
     

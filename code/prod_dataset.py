@@ -9,7 +9,7 @@ import numpy as np
 from splitting import ttv_split
 from data_manipulation import TraceDataset
 
-def make_dataset(pickle_path, numpy_path, train, valid, test, dataset = TraceDataset):
+def make_datasets(pickle_path, numpy_path, train, valid, test, dataset = TraceDataset):
     """Produces dataset from train, valid and test string locations from numpy 
     strings"""
     

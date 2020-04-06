@@ -28,9 +28,15 @@ class TraceDataset(Dataset):
         self.trace = np.load(self.trace_path)
         self.param = pd.read_pickle(self.param_path)
         
+        
+    def __len__(self):
+        return len(self.param)
+    
     def __getitem__(self, i):
         return self.param.loc[i].to_numpy(), self.trace[i]
     
+
+
 
     
 def main():

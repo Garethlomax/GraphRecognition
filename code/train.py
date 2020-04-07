@@ -38,6 +38,24 @@ import datetime
 
 # put printing into seperate function 
 
+def validate(model, dataloader, loss_func, verbose = False):
+    """validation routine for validation of VAE models.
+    """
+    i = 0
+    total_loss = 0 
+    model.eval()
+    
+    for x in dataloader:
+        with torch.no_grad():
+            x = x.to(device)
+            prediction = model(x)
+            loss = loss_func(prediction, x)
+            total_loss += loss
+            i += 1
+    return total_loss / i 
+    
+
+
 def train_enc_dec(model, optimizer, dataloader, loss_func = nn.MSELoss(), verbose = False):
     """Training function for encoder decoder models.
 
@@ -157,18 +175,24 @@ def wrapper_vae(model_name, optimizer, loss_func, lr = None, epochs = 50, **kwar
     
     for epoch in range(epochs):
         
-        # trainig 
+        # trainig
+        # validation 
+
         # loss 
         # loss logging 
         # saving 
         
+        model, loss = train_vae(model, optimizer, train_loader, loss_func) # do we need to reassign model at this step?? 
+        
+        validation_loss = validate(model, validation_loader, loss_func)
+
         model_filename = gen_name(model_name + "_epoch_" + str(epoch) + "_time_", ".pth", mode = time)
         optimizer_filename = gen_name(model_name + "_epoch_" + str(epoch) + "_time_", ".pth", mode = time)
         
         torch.save(optimizer.state_dict(), optimizer_filename)
         torch.save(model.state_dict(), model_filename)
         
-        validation_loss = valid
+    return True
         
     
     

@@ -30,10 +30,153 @@ device = 'cuda'
 from sklearn.metrics import roc_curve, roc_auc_score, average_precision_score
 import pandas as pd
 
+from gen_filename import gen_name
+
+import datetime
+
 """training loop for overall training run"""
 
+# put printing into seperate function 
 
-def wrapper_full(name, optimizer,  structure, loss_func, avg, std, application_boolean, lr = None, epochs = 50, kernel_size = 3, batch_size = 50, dataset_name = 'train_fixed_25.hdf5'):
+def train_enc_dec(model, optimizer, dataloader, loss_func = nn.MSELoss(), verbose = False):
+    """Training function for encoder decoder models.
+
+    Parameters
+    ----------
+    model: pytorch module
+        Input model to be trained. Model should be end to end differentiable,
+        and be inherited from nn.Module. model should be sent to the GPU prior
+        to training, using model.cuda() or model.to(device)
+    optimizer: pytorch optimizer.
+        Pytorch optimizer to step model function. Adam / AMSGrad is recommended
+    dataloader: pytorch dataloader
+        Pytorch dataloader initialised with hdf5 averaged datasets
+    loss_func: pytorch loss function
+        Pytorch loss function
+    verbose: bool
+        Controls progress printing during training.
+
+    Returns
+    -------
+    model: pytorch module
+        returns the trained model after one epoch, i.e exposure to every piece
+        of data in the dataset.
+    tot_loss: float
+        Average loss per sample for the training epoch
+    """
+    i = 0
+    model.train()
+    # model now tracks gradients
+    tot_loss = 0
+    for x, y in dataloader:
+        x = x.to(device) # Copy image tensors onto GPU(s)
+        y = y.to(device)
+        optimizer.zero_grad()
+        # zeros saved gradients in the optimizer.
+        # prevents multiple stacking of gradients
+
+        prediction = model(x)
+
+        if verbose:
+            print(prediction.shape)
+            print(y.shape)
+            
+        loss = loss_func(prediction[:,0,0], y)
+
+        # differentiates model parameters wrt loss
+        loss.backward()
+
+        optimizer.step()
+        # steps forward model parameters
+
+        tot_loss += loss.item()
+
+        if verbose:
+            print("BATCH:")
+            print(i)
+        i += 1
+
+        if verbose:
+            print("MSE_LOSS:", tot_loss / i)
+        tot_loss /= i
+    return model, tot_loss # trainloss, trainaccuracy
+
+def train_vae(model, optimizer, dataloader, loss_func = nn.MSELoss(), verbose = False):
+    """Training function for training VAEs
+    
+    trains through one full epoch comparing reconstruction loss"""
+    
+    model.train()
+    i = 0 
+    total_loss = 0
+    for x in dataloader:
+        x = x.to(device)
+        optimzier.zero_grad()
+        prediction = model(x)
+        if verbose:
+            print(x.shape)
+            print(prediction.shape)
+        # reconstruction loss
+        loss = loss_func(prediction, x)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+        i += 1
+    
+    if verbose:
+        print("Epoch Loss:")
+        print(total_loss)
+    return model, total_loss
+
+def wrapper_vae(model_name, optimizer, loss_func, lr = None, epochs = 50, **kwargs):
+    """Wrapper for VAE training
+
+    Parameters
+    ----------
+    model_name : TYPE
+        DESCRIPTION.
+    optimizer : TYPE
+        DESCRIPTION.
+    loss_func : TYPE
+        DESCRIPTION.
+    lr : TYPE, optional
+        DESCRIPTION. The default is None.
+    epochs : TYPE, optional
+        DESCRIPTION. The default is 50.
+    **kwargs : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    # 
+    time = datetime.datetime.now()
+    
+    for epoch in range(epochs):
+        
+        # trainig 
+        # loss 
+        # loss logging 
+        # saving 
+        
+        model_filename = gen_name(model_name + "_epoch_" + str(epoch) + "_time_", ".pth", mode = time)
+        optimizer_filename = gen_name(model_name + "_epoch_" + str(epoch) + "_time_", ".pth", mode = time)
+        
+        torch.save(optimizer.state_dict(), optimizer_filename)
+        torch.save(model.state_dict(), model_filename)
+        
+        validation_loss = valid
+        
+    
+    
+    
+    
+    
+
+def wrapper_full(name, model, model_spec, optimizer,  structure, loss_func, avg, std, application_boolean, lr = None, epochs = 50, kernel_size = 3, batch_size = 50, dataset_name = 'train_fixed_25.hdf5'):
     """Training wrapper for LSTM encoder decoder models.
 
     Trains supplied model using train_enc_dec fucntions. Logs model hyperparameters
@@ -83,13 +226,13 @@ def wrapper_full(name, optimizer,  structure, loss_func, avg, std, application_b
 
     # construct model and send to GPU(s)
     if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(LSTMencdec_onestep(structure, 5, kernel_size = kernel_size)).to(device)
+        model = nn.DataParallel(model(*model_spec)).to(device)
     else:
-        model = LSTMencdec_onestep(structure, 5, kernel_size = kernel_size).to(device)
+        model = model(*model_spec).to(device) # using * to upack list of model specifications 
 
     # pass model parameters to optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr = lr, amsgrad= True)
-
+    
     # detail hyperparameters in log file
     f.write("Structure: \n")
     for i in range(len(structure)):
@@ -116,6 +259,10 @@ def wrapper_full(name, optimizer,  structure, loss_func, avg, std, application_b
 
     f.close()
     # initialise training and validation datasets.
+    
+    
+    
+    #splitting apart - change this workijng method. 
     train, valid = initialise_dataset_HDF5_full(dataset_name, valid_frac = 0.1, dataset_length = 56413,avg = avg, std = std, application_boolean=application_boolean)
 
     loss_func = loss_func

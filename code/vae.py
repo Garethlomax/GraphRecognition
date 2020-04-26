@@ -8,7 +8,9 @@ Created on Wed Apr  8 14:10:46 2020
 import torch
 import torch.nn as nn 
 
-class VAE(nn.module):
+device = "cpu"
+
+class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
         
@@ -18,7 +20,7 @@ class VAE(nn.module):
         self.act = nn.ReLU()
         
         self.l1 = nn.Conv1d(in_channels = input_channels, out_channels = 8,kernel_size = 32, padding = 1, stride = 3)
-        self.l2 = nn.Conv1d(in_channels = 8, out_channels = 16, kernel_size = 16, paddng = 1, stride = 4)
+        self.l2 = nn.Conv1d(in_channels = 8, out_channels = 16, kernel_size = 16, padding = 1, stride = 4)
         self.l3 = nn.Conv1d(in_channels = 16, out_channels = 32, kernel_size = 7, padding = 2, stride = 2)
         self.l4 = nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = 4, padding = 2, stride = 2)
         self.l5 = nn.Conv1d(in_channels = 64, out_channels = 128, kernel_size = 4, padding = 0, stride = 2)
@@ -32,7 +34,7 @@ class VAE(nn.module):
         # now flatten the tensor
         # can use max unpool1d or 2d.
         
-        self.fc1 = nn.Linear(in_features = 512, output_features = 64)
+        self.fc1 = nn.Linear(in_features = 512, out_features = 64)
         self.fc2 = nn.Linear(in_features = 64, out_features = 8)
         
         self.fc_logvar = nn.Linear(in_features = 8, out_features = 2)
@@ -40,12 +42,12 @@ class VAE(nn.module):
         
         self.ifc1 = nn.Linear(in_features = 2, out_features = 8)
         self.ifc2 = nn.Linear(in_features = 8, out_features = 64)
-        self.ifc3 = nn.Linear(in_features = 64, outfeatures = 512)
+        self.ifc3 = nn.Linear(in_features = 64, out_features = 512)
         
         self.il1 = nn.ConvTranspose1d(in_channels = 128, out_channels = 64, kernel_size = 4, padding = 0 , stride = 2)
         self.il2 = nn.ConvTranspose1d(in_channels = 64, out_channels = 32, kernel_size = 4, padding = 2, stride = 2)
         self.il3 = nn.ConvTranspose1d(in_channels = 32, out_channels = 16, kernel_size = 7, padding = 2, stride = 2)
-        self.il4 = nn.ConvTranspose1d(in_channels = 16, out_channels = 8, kernel_size = 16, paddin = 1, stride = 4)
+        self.il4 = nn.ConvTranspose1d(in_channels = 16, out_channels = 8, kernel_size = 16, padding = 1, stride = 4)
         self.il5 = nn.ConvTranspose1d(in_channels = 8, out_channels = 1, kernel_size = 32, padding = 1, stride = 3)
         
         self.ibn5 = nn.BatchNorm1d(8)
@@ -92,12 +94,12 @@ class VAE(nn.module):
         
         # TODO: check
         h = self.ibn1(h.view(-1,128,4))
+        print(h.size())
         
-        
-        h = self.bn2(self.activation(self.il1(h)))
-        h = self.bn3(self.activation(self.il2(h)))
-        h = self.bn4(self.activation(self.il3(h)))
-        h = self.bn5(self.activation(self.il4(h)))
+        h = self.ibn2(self.activation(self.il1(h)))
+        h = self.ibn3(self.activation(self.il2(h)))
+        h = self.ibn4(self.activation(self.il3(h)))
+        h = self.ibn5(self.activation(self.il4(h)))
         
         reconstruction = self.sigmoid(self.il5(h))
         
@@ -110,5 +112,9 @@ class VAE(nn.module):
         return reconstruction, z, mu, log_var
 
         
+x = torch.randn((10,1,501)).to(device)
+model = VAE().to(device)
+x_, z, mu, logvar = model(x)
+print(x_.size(), z.size(), mu.size(), logvar.size())
         
         

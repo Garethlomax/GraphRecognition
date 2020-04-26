@@ -21,15 +21,18 @@ device = 'cuda'
 import pandas as pd
 
 
+
 class TraceDataset(Dataset):
     def __init__(self, trace_path, param_path, transforms = None, index_mapping = False):
         #TODO: get rid of index_mapping
         self.trace_path = trace_path
         self.param_path = param_path
-        self.trace = np.load(self.trace_path)
+        self.trace = np.load(self.trace_path).copy()
         self.param = pd.read_pickle(self.param_path)
         self.index_mapping = index_mapping
         
+        #convert to tensor
+        self.trace = torch.tensor(self.trace)
     def __len__(self):
         
         if self.index_mapping is False:
@@ -40,10 +43,12 @@ class TraceDataset(Dataset):
     def __getitem__(self, i):
         
         if self.index_mapping is False:
-            return self.param.loc[i].to_numpy(), self.trace[i]
+            return torch.tensor(self.param.loc[i]), self.trace[i]
         else:
             i = self.index_mapping[i]
-            return self.param.loc[i].to_numpy(), self.trace[i]
+            return torch.tensor(self.param.loc[i]), self.trace[i]
+
+# TODO: compare conversion between the two in case of lag
 
     
 

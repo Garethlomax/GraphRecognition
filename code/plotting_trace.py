@@ -23,6 +23,11 @@ df = pd.read_pickle("../data/test_grid_2020-04-26-09_34_50_413400.pkl")
 
 # down = ss.decimate(data[0,:,1], 20)
 
+
+
+
+
+
 def reduce_data(data, downsampling_ratio, cutoff, save = False, filename = "dset.npy"):
     """downsample traces in dataset to produce into another"""
     data = ss.decimate(data[:,:,1], downsampling_ratio)
@@ -35,9 +40,22 @@ def reduce_data(data, downsampling_ratio, cutoff, save = False, filename = "dset
 def add_fail(data, df):
     """adds boolean checking if simulation failed"""
     fail_boolean = [np.array_equal(data[i], np.zeros((10001,2))) for i in range(len(data))]
-    
     df["completion_failiure"] = fail_boolean
     
+    
+
+
+
+def combine_data(data1, data2, df1, df2, df1_model_name, df2_model_name):
+    """ combine dataframe and numpy array"""
+    data = np.concatenate((data1, data2))
+    df1['model_name'] = [df1_model_name for i in range(len(df1))]
+    df2['model_name'] = [df2_model_name for i in range(len(df2))]
+    df = df1.concatenate(df2) # TODO: check if this is correct
+    return data, df
+
+
+
 
 def param_plots(data, df):  
     add_fail(data, df)
@@ -68,7 +86,8 @@ def param_plots(data, df):
                       plot_kws=dict(edgecolor="black", linewidth=0.5))
     fig = pp.fig 
     fig.subplots_adjust(top=0.93, wspace=0.3)
-    fig.suptitle('Wine Attributes Pairwise Plots', fontsize=14)
-    
+    fig.suptitle('Pairwise Parameter Plots', fontsize=14)
+ 
+
     
     

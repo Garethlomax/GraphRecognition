@@ -15,10 +15,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.signal as ss
 
 
-data = np.load("../data/Model-1_2020-04-25-22_36_54_211954.npy")
-
-df = pd.read_pickle("../data/test_grid_2020-04-26-09_34_50_413400.pkl")
-
 
 
 # down = ss.decimate(data[0,:,1], 20)
@@ -36,6 +32,11 @@ def reduce_data(data, downsampling_ratio, cutoff, save = False, filename = "dset
         np.save(filename, data)
     return data
     
+def remove_fail(data, df):
+    bool_select = df['completion_faliure'] is False
+    df = df[bool_select]
+    data = data[bool_select]
+    return data, df
 
 def add_fail(data, df):
     """adds boolean checking if simulation failed"""
@@ -53,6 +54,8 @@ def combine_data(data1, data2, df1, df2, df1_model_name, df2_model_name):
     df2['model_name'] = [df2_model_name for i in range(len(df2))]
     df = df1.concatenate(df2) # TODO: check if this is correct
     return data, df
+
+
 
 
 
@@ -89,5 +92,13 @@ def param_plots(data, df):
     fig.suptitle('Pairwise Parameter Plots', fontsize=14)
  
 
+    
+if __name == '__main__':
+    data = np.load("../data/Model-1_2020-04-25-22_36_54_211954.npy")
+
+    df = pd.read_pickle("../data/test_grid_2020-04-26-09_34_50_413400.pkl")
+
+    add_fail(data, df)
+    
     
     

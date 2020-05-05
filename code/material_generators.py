@@ -30,13 +30,16 @@ class material_selection:
     def __init__(self,df):
         self.df = df
         self.mat_list = [material(a.material, 'gaussian', 'elastic', list(a.keys()[1:]), np.array(list(a[1:]))) for index, a in df.iterrows()]
-    
+        
     def gen(self, size = 1):
         data_list = []
         
         for i, mat in enumerate(self.mat_list):
             data_list.append(mat.gen(size = size))
         return np.concatenate(data_list)
+    
+    
+
             
 
     
